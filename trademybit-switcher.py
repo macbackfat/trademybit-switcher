@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
+from collections import Counter
 import ConfigParser
 import csv
 import datetime
@@ -11,6 +12,7 @@ import socket
 import subprocess
 import sys
 import time
+import json
 
 from trademybitapi import TradeMyBitAPI
 from pycgminer import CgminerAPI
@@ -36,13 +38,8 @@ class TradeMyBitSwitcher(object):
 
     def main(self):
         try:
-            # cnt_all = 0
-            # main loop
             print '-' * 72
-
             while True:
-                # print header
-                # self.logger.info("<<< Round %d >>>" % (cnt_all+1))
 
                 # get data from sources
                 self.logger.debug("Fetching data...")
@@ -60,7 +57,7 @@ class TradeMyBitSwitcher(object):
                     self.switch_algo(self.algos.keys()[0])
 
                 # sleep
-                self.logger.debug('Going to sleep for %dmin...' % self.idletime)
+                self.logger.debug('Going to sleep for %d min...' % self.idletime)
                 i = 0
                 while i < self.idletime * 60:
                     time.sleep(1)
@@ -79,19 +76,35 @@ class TradeMyBitSwitcher(object):
 
     def best_algo(self):
         """Retrieves the "bestalgo" from TMB api"""
+        
+        data_dict = {}            
+        algolist = []
+
         try:
             data = self.api.bestalgo()
-            # parse json data into variables
             
-            for key in self.algos:
-                for eachdata in data:
-                    if eachdata['algo'] == key:
-                        print eachdata['score']
+            #
+            # Populate the data_dict with the algos returned
+            # from the API query that will be used to write
+            # the profitability report and isolate into a 
+            # list of dictionaries only the algorithms that 
+            # are being mined by this miner
+            #
             
-            algo1 = data[0]["algo"]
-            score1 = float(data[0]["score"])
-            algo2 = data[1]["algo"]
-            score2 = float(data[1]["score"])
+            for each_data in data:
+                for algo in self.algos:
+                    if algo == each_data['algo']:
+                        data_dict[each_data['algo']] = float(each_data['score'])
+            
+            d = Counter(data_dict)
+
+            #
+            # Populate the data_dict with the timestamp
+            #            
+            data_dict['date'] = datetime.datetime.now()
+            
+            algo1, score1 = d.most_common(2)[0]
+            algo2, score2 = d.most_common(2)[1]
 
             self.logger.debug("%s : %f | %s: %f" % (algo1, score1, algo2, score2))
 
@@ -104,11 +117,11 @@ class TradeMyBitSwitcher(object):
                 best = None
 
             if self.profitability_log:
-                self.profitability_log.writerow({'date': datetime.datetime.now(), algo1: score1, algo2: score2})
-                self.profitability_file.flush()
-                
+                self.profitability_log.writerow(data_dict)
+                self.profitability_file.flush()                
 
             return best
+
         except (socket.error, KeyError):
             self.logger.warning('Cannot connect to TMB API...')
             return None
@@ -177,18 +190,21 @@ class TradeMyBitSwitcher(object):
 
     def __prepare_profitability_log(self, csv_file):
         # Check if file is already present to know if we need to write the headers
-        write_header = not(os.path.isfile(csv_file))
+        
+        if os.path.isfile(csv_file):
+            os.rename(csv_file, 'profitability-' + time.strftime("%Y%m%d-%H%M%S") + ".csv")
+#         write_header = not(os.path.isfile(csv_file))
 
         self.profitability_file = open(csv_file, 'ab')
         
         csv_header = ['date']
-        for items in self.algos:
-            csv_header.append(items)
+        for algo in self.algos:
+            csv_header.append(algo)
 
         self.profitability_log = csv.DictWriter(self.profitability_file, csv_header)
 
-        if write_header:
-            self.profitability_log.writeheader()
+#         if write_header:
+        self.profitability_log.writeheader()
 
     def __load_config(self):
         config_file = 'tmb-switcher.conf'
@@ -245,7 +261,7 @@ class TradeMyBitSwitcher(object):
             except ConfigParser.NoOptionError :
                 self.logger.warning('Script for %s not configured!' % key)
                 continue
-    
+
         # Read the logging settings and setup the logger
         logging_config = dict(config.items('Logging'))
         self.__prepare_logger(logging_config)
