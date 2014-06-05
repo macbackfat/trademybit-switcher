@@ -1,11 +1,13 @@
 # TradeMyBit Switcher
 
-A script to switch between the scrypt and n-scrypt multipool as profitability dictates.
+A script to switch between scrypt, n-scrypt, x11 and x13 on TMB as profitability dictates.
 
 Currently tested on:
 * xubuntu 13.10 with cgminer-kalroth and vertminer
 * xubuntu 13.10 with sgminer (nfactor branch)
-* xubuntu 12.04
+* xubuntu 12.10 with the following miners:
+  * sph-sgminer from prettyhatemachine
+  * sph-sgminer_x11mod from lasybear
 * SMOS Linux (Strider3000)
 
 ## Dependencies
@@ -71,6 +73,8 @@ And if you'd like to tip other people whose work is used here:
   * BTC: `1GQmF3QdrftVmhvP8HrgEwyZTztjDuiJLC`
   * LTC: `LKp4mcPeGmfyvP6amY27Q9TzRq3wkp5zJJ`
 * CryptoSwitcher (https://github.com/area/CryptoSwitcher) for the general idea 
-  * BTC : `1NhathL6LpcgofDnHELSS6Hej6kU9xrVgp`
+  * BTC: `1NhathL6LpcgofDnHELSS6Hej6kU9xrVgp`
 * tsileo for the cgminer API wrapper (https://github.com/tsileo/pycgminer)
-  * BTC `18ZcxHsKnc4a1AhnThQ2tiLVjQehxKaGFX` 
+  * BTC: `18ZcxHsKnc4a1AhnThQ2tiLVjQehxKaGFX` 
+* macbackfat for the rounding out the rough edges
+  * BTC: `1NSAFdy759AeDc3NiDcDA4byM4fSc7RLw8`
