@@ -1,0 +1,10 @@
+#!/bin/sh
+
+export DISPLAY=:0
+export GPU_MAX_ALLOC_PERCENT=100
+export GPU_USE_SYNC_OBJECTS=1
+
+# Path were sgminer is installed
+cd ~/sph-sgminer/
+
+screen -dmS sgminer-x11 ./sgminer --api-network --api-listen --api-allow W:127.0.0.1 -k x11mod
