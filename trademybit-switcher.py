@@ -18,17 +18,14 @@ from pycgminer import CgminerAPI
 
 class Algo:
     def __init__(self, name):
-        self.command    = '' # the command that is run when we want to mine this coin.
-        self.name       = name
-        self.cnt        = 0
+        self.command = ''  # the command that is run when we want to mine this coin.
+        self.name = name
+        self.cnt = 0
 
 class TradeMyBitSwitcher(object):
     def __init__(self):
         # Define supported algo
         self.algos = {}
-        self.algos['scrypt']  =  Algo('Scrypt')
-        self.algos['nscrypt'] =  Algo('N-Scrypt')
-
         self.profitability_log = None
         self.__load_config()
         self.api = TradeMyBitAPI(self.api_key, 'https://pool.trademybit.com/api/')
@@ -65,7 +62,7 @@ class TradeMyBitSwitcher(object):
                 # sleep
                 self.logger.debug('Going to sleep for %dmin...' % self.idletime)
                 i = 0
-                while i < self.idletime*60:
+                while i < self.idletime * 60:
                     time.sleep(1)
                     i += 1
         except KeyboardInterrupt:
@@ -85,6 +82,12 @@ class TradeMyBitSwitcher(object):
         try:
             data = self.api.bestalgo()
             # parse json data into variables
+            
+            for key in self.algos:
+                for eachdata in data:
+                    if eachdata['algo'] == key:
+                        print eachdata['score']
+            
             algo1 = data[0]["algo"]
             score1 = float(data[0]["score"])
             algo2 = data[1]["algo"]
@@ -103,28 +106,12 @@ class TradeMyBitSwitcher(object):
             if self.profitability_log:
                 self.profitability_log.writerow({'date': datetime.datetime.now(), algo1: score1, algo2: score2})
                 self.profitability_file.flush()
+                
 
             return best
         except (socket.error, KeyError):
             self.logger.warning('Cannot connect to TMB API...')
             return None
-
-    # # Return scrypt/nscrypt based on the version of the miner running
-    # # Temporarly disabled to support sgminer since we can't reliably determine
-    # # if sgminer is mining nfactor 10 or 11
-    # def current_algo(self):
-    #     try:
-    #         data = self.cgminer.version()
-    #         version = data['STATUS'][0]['Description']
-    #         if version.startswith('vertminer'): # vertminer 0.5.4pre1
-    #             return 'nscrypt'
-    #         elif version.startswith('cgminer'): # cgminer 3.7.2
-    #             return 'scrypt'
-    #         else:
-    #             return None
-    #     except:
-    #         self.logger.warning('Cannot connect to miner API...')
-    #         return None
 
     def switch_algo(self, algo):
         """Tells the current miner to exit and start the other one"""
@@ -132,9 +119,9 @@ class TradeMyBitSwitcher(object):
         self.current_algo = algo
         try:
             self.cgminer.quit()
-            time.sleep(self.switchtime) # Wait for it to quit / Or check the process id?
+            time.sleep(self.switchtime)  # Wait for it to quit / Or check the process id?
         except socket.error:
-            pass # Cgminer not running
+            pass  # Cgminer not running
 
         try:
             subprocess.Popen(self.algos[algo].command)
@@ -158,7 +145,7 @@ class TradeMyBitSwitcher(object):
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
 
-        ## Console logging
+        # # Console logging
         
         # create console handler
         stream_handler = logging.StreamHandler()
@@ -171,7 +158,7 @@ class TradeMyBitSwitcher(object):
         # add the handler to the logger
         self.logger.addHandler(stream_handler)
 
-        ## File logging
+        # # File logging
 
         if logfile:
             print "Logging to %s" % logfile
@@ -193,14 +180,18 @@ class TradeMyBitSwitcher(object):
         write_header = not(os.path.isfile(csv_file))
 
         self.profitability_file = open(csv_file, 'ab')
+        
+        csv_header = ['date']
+        for items in self.algos:
+            csv_header.append(items)
 
-        self.profitability_log = csv.DictWriter(self.profitability_file, ['date', 'scrypt', 'nscrypt'])
+        self.profitability_log = csv.DictWriter(self.profitability_file, csv_header)
 
         if write_header:
             self.profitability_log.writeheader()
 
     def __load_config(self):
-        config_file =  'tmb-switcher.conf'
+        config_file = 'tmb-switcher.conf'
         #  Check if the config file is present
         if not(os.path.isfile(config_file)):
             print "ERROR: Configuration file not found!"
@@ -211,10 +202,6 @@ class TradeMyBitSwitcher(object):
         config = ConfigParser.ConfigParser()
         config.read(config_file)
 
-        # Read the logging settings and setup the logger
-        logging_config = dict(config.items('Logging'))
-        self.__prepare_logger(logging_config)
-
         # Read the settings or use default values
         try:
             self.api_key = config.get('TradeMyBit', 'apikey')
@@ -222,7 +209,7 @@ class TradeMyBitSwitcher(object):
             self.logger.critical("Could not read apikey from config file")
             sys.exit()
         try:
-            self.idletime = config.getint('Misc','idletime')
+            self.idletime = config.getint('Misc', 'idletime')
         except:
             self.logger.warning("Could not read idletime from config file. Defaulting to 5 min")
             self.idletime = 5
@@ -232,7 +219,7 @@ class TradeMyBitSwitcher(object):
             self.logger.warning("Could not read switchtime from config file. Defaulting to 1s")
             self.switchtime = 1
         try:
-            self.profitability_threshold = config.getfloat('Misc','profitability_threshold')
+            self.profitability_threshold = config.getfloat('Misc', 'profitability_threshold')
         except:
             self.logger.warning("Could not read profitability_threshold from config file. Defaulting to 10%")
             self.profitability_threshold = 0.1
@@ -247,17 +234,21 @@ class TradeMyBitSwitcher(object):
             self.logger.warning("Could not read cgminer port from config file. Defaulting to 4028")
             self.cgminer_host = 4028
 
-        for key in self.algos:
+        for algo, script in config.items('Scripts'):
             try:
-                script = config.get('Scripts', key)
                 if os.path.isfile(script):
-                    self.algos[key].command = script
+                    self.algos[algo] = Algo(algo)
+                    self.algos[algo].command = script
                 else:
                     self.logger.critical('Script for %s not found!' % key)
                     self.cleanup()
             except ConfigParser.NoOptionError :
                 self.logger.warning('Script for %s not configured!' % key)
                 continue
+    
+        # Read the logging settings and setup the logger
+        logging_config = dict(config.items('Logging'))
+        self.__prepare_logger(logging_config)
 
 def main():
     switcher = TradeMyBitSwitcher()

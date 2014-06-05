@@ -5,6 +5,7 @@ A script to switch between the scrypt and n-scrypt multipool as profitability di
 Currently tested on:
 * xubuntu 13.10 with cgminer-kalroth and vertminer
 * xubuntu 13.10 with sgminer (nfactor branch)
+* xubuntu 12.04
 * SMOS Linux (Strider3000)
 
 ## Dependencies
@@ -13,7 +14,7 @@ Currently tested on:
 
 ## Usage
 
-1. Download or clone this repository.
+1. Download or clone this repository
 
 2. Have a look at example scripts in the `scripts` folder, and rename/edit them according to your system setup. cgminer API *must* be enabled (`--api-listen --api-allow W:127.0.0.1`)
 
