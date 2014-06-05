@@ -13,7 +13,7 @@ Currently tested on:
 
 ## Usage
 
-1. Download or clone this repository
+1. Download or clone this repository.
 
 2. Have a look at example scripts in the `scripts` folder, and rename/edit them according to your system setup. cgminer API *must* be enabled (`--api-listen --api-allow W:127.0.0.1`)
 
