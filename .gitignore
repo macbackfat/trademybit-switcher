@@ -1,5 +1,6 @@
 tmb-switcher.conf
 profitability*.csv
+.settings
 
 *.py[cod]
 
