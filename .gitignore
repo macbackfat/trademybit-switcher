@@ -1,3 +1,6 @@
+tmb-switcher.conf
+profitability*.csv
+
 *.py[cod]
 
 # C extensions
