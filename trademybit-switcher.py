@@ -125,6 +125,9 @@ class TradeMyBitSwitcher(object):
         except (socket.error, KeyError):
             self.logger.warning('Cannot connect to TMB API...')
             return None
+        except IndexError:
+            self.logger.warning('Empty TMB API resultset...')
+            return None
 
     def switch_algo(self, algo):
         """Tells the current miner to exit and start the other one"""
