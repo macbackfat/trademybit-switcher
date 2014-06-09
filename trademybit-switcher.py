@@ -245,6 +245,7 @@ class TradeMyBitSwitcher(object):
 
         for key in dict(config.items('Scripts')):
             try:
+                script = config.get('Scripts', key)
                 if os.path.isfile(script):
                     self.algos[key] = Algo(key)
                     self.algos[key].command = script
