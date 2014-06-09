@@ -210,6 +210,10 @@ class TradeMyBitSwitcher(object):
         # Load the config file
         config = ConfigParser.ConfigParser()
         config.read(config_file)
+        
+        # Read the logging settings and setup the logger
+        logging_config = dict(config.items('Logging'))
+        self.__prepare_logger(logging_config)
 
         # Read the settings or use default values
         try:
